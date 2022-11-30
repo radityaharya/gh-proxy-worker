@@ -6,11 +6,6 @@ const CACHE_TIME_MINUTES = 60
 
 export default {
 	async fetch(request, env) {
-		console.log(request.url)
-		if (request.url.endsWith("/list")) {
-			var list = await env.MY_BUCKET.list()
-			return new Response(JSON.stringify(list))
-		}
 		const response = await cache(request, env)
 		return response
 	}
@@ -26,51 +21,32 @@ async function cache(request, env) {
 	const contentType = url.endsWith(".js") ? "application/javascript" : url.endsWith(".css") ? "text/css" : "text/plain"
 	const cache = await BUCKET.get(cacheKey)
 	var result = null
-	var isCache = false
 	if (cache) {
 		if (Date.now() - cache.uploaded < CACHE_TIME_MINUTES * 60 * 1000) {
 			var result = await cache.text()
-			var isCache = true
-		} else{
-			var isCache = false
-		}
+		} 
 	} 
-	if (!isCache) {
+	if (!result) {
 		try {
 			result = await handleRequest(request).then(res => res.text())
+		} catch (error) {
+			result = url + " not found or cant be delivered"
 		}
-		catch (e) {
-			var result = await cache.text()
-			var error = e
-		}
-		var isCache = false
-	}
-	if (result) {
-		if (!isCache) {
+		if (result != "Not Found") {
 			BUCKET.put(cacheKey, result, {
 				httpMetadata: {
 					"Content-Type": contentType,
 				}
 			})
 		}
-		var headers = {
+	}
+	return new Response(result, {
+		status: (result == "Not Found" ? 404 : 200),
+		headers: {
 			"Content-Type": contentType,
 			"Cache-Control": "public, max-age=" + CACHE_TIME_MINUTES * 60,
-			"IsCached": isCache,
 		}
-		if (isCache) {
-			headers["Upload-Date"] = cache.uploaded
-			headers["Age"] = Math.floor((Date.now() - cache.uploaded) / 1000)
-		}
-		if (error) {
-			headers["Error"] = error
-		}
-		return new Response(result, {
-			status: 200,
-			headers: headers
-		})
-	}
-	return new Response('Not found', { status: 404 })
+	})
 }
 
 async function minify(response) {

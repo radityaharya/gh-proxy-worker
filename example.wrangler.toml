@@ -1,0 +1,9 @@
+name = "gh-proxy-worker"
+main = "src/index.js"
+compatibility_date = "2022-11-27"
+account_id = "ACCOUNT ID"
+workers_dev = true
+
+[[r2_buckets]]
+binding = 'MY_BUCKET'
+bucket_name = 'BUCKET NAME"

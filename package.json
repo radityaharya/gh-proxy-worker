@@ -1,0 +1,15 @@
+{
+  "name": "gh-proxy-worker",
+  "version": "0.0.0",
+  "devDependencies": {
+    "wrangler": "2.4.4"
+  },
+  "private": true,
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler publish"
+  },
+  "dependencies": {
+    "querystring": "^0.2.1"
+  }
+}
